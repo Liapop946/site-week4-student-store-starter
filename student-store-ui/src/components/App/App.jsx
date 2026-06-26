@@ -7,6 +7,7 @@ import Home from "../Home/Home";
 import ProductDetail from "../ProductDetail/ProductDetail";
 import NotFound from "../NotFound/NotFound";
 import { removeFromCart, addToCart, getQuantityOfItemInCart, getTotalItemsInCart } from "../../utils/cart";
+import { API_BASE_URL } from "../../constants";
 import "./App.css";
 
 function App() {
@@ -36,8 +37,49 @@ function App() {
     setSearchInputValue(event.target.value);
   };
 
+  // Fetch all products on mount so the home page displays the product table.
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setIsFetching(true);
+      setError(null);
+      try {
+        const { data } = await axios.get(`${API_BASE_URL}/products`);
+        setProducts(data);
+      } catch (err) {
+        setError("Failed to load products.");
+      } finally {
+        setIsFetching(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
   const handleOnCheckout = async () => {
-  }
+    if (!Object.keys(cart).length) {
+      setError("Your cart is empty.");
+      return;
+    }
+
+    setIsCheckingOut(true);
+    setError(null);
+    try {
+      const items = Object.entries(cart).map(([productId, quantity]) => ({
+        productId: Number(productId),
+        quantity,
+      }));
+      const { data } = await axios.post(`${API_BASE_URL}/orders`, {
+        customerId: userInfo.name || "anonymous",
+        items,
+      });
+      setOrder(data);
+      setCart({});
+    } catch (err) {
+      setError(err?.response?.data?.error || "Checkout failed.");
+    } finally {
+      setIsCheckingOut(false);
+    }
+  };
 
 
   return (

@@ -3,15 +3,32 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import NotFound from "../NotFound/NotFound";
 import { formatPrice } from "../../utils/format";
+import { API_BASE_URL } from "../../constants";
 import "./ProductDetail.css";
 
 function ProductDetail({ addToCart, removeFromCart, getQuantityOfItemInCart }) {
-  
+
   const { productId } = useParams();
   const [product, setProduct] = useState(null);
   const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState(null);
 
+  useEffect(() => {
+    const fetchProduct = async () => {
+      setIsFetching(true);
+      setError(null);
+      try {
+        const { data } = await axios.get(`${API_BASE_URL}/products/${productId}`);
+        setProduct(data);
+      } catch (err) {
+        setError("Product not found.");
+      } finally {
+        setIsFetching(false);
+      }
+    };
+
+    fetchProduct();
+  }, [productId]);
 
   if (error) {
     return <NotFound />;
@@ -39,7 +56,7 @@ function ProductDetail({ addToCart, removeFromCart, getQuantityOfItemInCart }) {
     <div className="ProductDetail">
       <div className="product-card">
         <div className="media">
-          <img src={product.image_url || "/placeholder.png"} alt={product.name} />
+          <img src={product.imageUrl || "/placeholder.png"} alt={product.name} />
         </div>
         <div className="product-info">
           <p className="product-name">{product.name}</p>
